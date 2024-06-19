@@ -1,6 +1,6 @@
 {
     "name": "@ayaseaki/swc-plugin-monorepo-relative-path-resolve",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Resolve relative paths from source code of sub-packages in a monorepo.",
     "author": "Aki <kirainmoe@gmail.com>",
     "license": "MIT",

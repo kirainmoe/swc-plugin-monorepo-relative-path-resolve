@@ -2,12 +2,6 @@
 
 A SWC plugin to handle resolving relative import paths like `@/*` and `@common/*` of sub-packages in a monorepo.
 
-## Usage
-
-```bash
-pnpm i -D @ayaseaki/swc-plugin-monorepo-relative-path-resolve
-```
-
 ## Why
 
 For monorepo scene, we often have the need to directly import the source code of sub-packages to get a better bundle speed. 
@@ -34,6 +28,10 @@ console.log(foo);
 This plugin aims to resolve a subset of this issue: if your alias is just a relative of `src` path, you can use this swc plugin to dynamically replace the import alias during compile-time.
 
 ## Usage
+
+```bash
+pnpm i -D @ayaseaki/swc-plugin-monorepo-relative-path-resolve
+```
 
 This plugin can handle the import source matching `{prefix}{subpath}?/`. For example:
 
@@ -71,6 +69,8 @@ Usage with rspack:
   ],
 },
 ```
+
+See [example](https://github.com/kirainmoe/swc-plugin-monorepo-relative-path-resolve/tree/master/example) for detail.
 
 ## Configration
 
