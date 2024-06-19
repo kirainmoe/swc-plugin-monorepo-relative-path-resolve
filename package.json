@@ -1,0 +1,23 @@
+{
+    "name": "@ayaseaki/swc-plugin-monorepo-relative-path-resolve",
+    "version": "0.1.0",
+    "description": "Resolve relative paths from source code of sub-packages in a monorepo.",
+    "author": "Aki <kirainmoe@gmail.com>",
+    "license": "MIT",
+    "keywords": ["swc-plugin"],
+    "main": "target/wasm32-wasi/release/swc_plugin_monorepo_relative_resolve.wasm",
+    "scripts": {
+        "build": "cargo build-wasi --release",
+        "prepublish": "pnpm build"
+    },
+    "files": [
+        "README.md",
+        "package.json",
+        "target/wasm32-wasi/release/swc_plugin_monorepo_relative_resolve.wasm"
+    ],
+    "preferUnplugged": true,
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org"
+    }
+}
