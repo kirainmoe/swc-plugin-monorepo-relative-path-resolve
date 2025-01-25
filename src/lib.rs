@@ -4,7 +4,7 @@ use regex::Regex;
 use serde::Deserialize;
 use swc_core::ecma::{
     ast::{Program, Str},
-    visit::{as_folder, FoldWith, VisitMut},
+    visit::{visit_mut_pass, VisitMut},
 };
 use swc_core::plugin::{
     metadata::TransformPluginMetadataContextKind, plugin_transform,
@@ -45,7 +45,7 @@ impl VisitMut for TransformVisitor {
                         .join("|")
                 })
                 .unwrap_or(String::from(""));
-        
+
             let prefix = regex::escape(
                 self.config
                     .prefix
@@ -103,7 +103,7 @@ pub fn process_transform(program: Program, metadata: TransformPluginProgramMetad
     )
     .unwrap_or_default();
 
-    program.fold_with(&mut as_folder(TransformVisitor {
+    program.apply(visit_mut_pass(TransformVisitor {
         config,
         filename,
         cwd,
