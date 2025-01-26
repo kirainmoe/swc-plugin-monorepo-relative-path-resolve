@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 use regex::Regex;
 use serde::Deserialize;
 use swc_core::ecma::{
-    ast::{Program, Str},
+    ast::{Callee, ImportPhase, Program, Str},
     visit::{visit_mut_pass, VisitMut},
 };
 use swc_core::plugin::{
@@ -12,7 +12,6 @@ use swc_core::plugin::{
 };
 
 pub struct TransformVisitor {
-    config: Config,
     filename: String,
     cwd: String,
 }
@@ -27,36 +26,14 @@ pub struct Config {
     pub allowed_pathnames: Option<Vec<String>>,
 }
 
-impl VisitMut for TransformVisitor {
-    fn visit_mut_import_decl(&mut self, n: &mut swc_core::ecma::ast::ImportDecl) {
-        let import_source = &n.src.as_ref().value;
+static REGEX_CELL: OnceLock<Regex> = OnceLock::new();
 
-        static REGEX_CELL: OnceLock<Regex> = OnceLock::new();
-        let rootpath_regex = REGEX_CELL.get_or_init(|| {
-            let allowed_pathnames = self
-                .config
-                .allowed_pathnames
-                .as_ref()
-                .map(|pathnames| {
-                    pathnames
-                        .into_iter()
-                        .map(|pathname| regex::escape(pathname))
-                        .collect::<Vec<String>>()
-                        .join("|")
-                })
-                .unwrap_or(String::from(""));
+impl TransformVisitor {
+    fn fix_path(&self, target: &mut Str) {
+        let source = target.value.clone();
+        let rootpath_regex = REGEX_CELL.get().unwrap();
 
-            let prefix = regex::escape(
-                self.config
-                    .prefix
-                    .as_ref()
-                    .map(|prefix| prefix.as_str())
-                    .unwrap_or("@"),
-            );
-            Regex::new(&format!(r"{}({})?/", prefix, allowed_pathnames)).unwrap()
-        });
-
-        if let Some(result) = rootpath_regex.captures(&import_source) {
+        if let Some(result) = rootpath_regex.captures(&source) {
             let replace_target = result.get(0).unwrap();
             let alias_subpath = result.get(1);
 
@@ -67,7 +44,7 @@ impl VisitMut for TransformVisitor {
             }
 
             let closest_src_path = &relative_path[0..last_src_pos.unwrap() + 4];
-            let import_payload = import_source.replace(replace_target.as_str(), "");
+            let import_payload = source.replace(replace_target.as_str(), "");
 
             let fixed_path = match alias_subpath {
                 Some(path) => format!(
@@ -81,9 +58,53 @@ impl VisitMut for TransformVisitor {
 
             let fixed_path_atom = Str::from_tpl_raw(&fixed_path);
 
-            let src_mut = n.src.as_mut();
-            src_mut.value = fixed_path_atom.clone();
-            src_mut.raw = Some(fixed_path_atom);
+            target.value = fixed_path_atom.clone();
+            target.raw = Some(fixed_path_atom);
+        }
+    }
+}
+
+impl VisitMut for TransformVisitor {
+    /// export { foo } from './foo';
+    fn visit_mut_named_export(&mut self, n: &mut swc_core::ecma::ast::NamedExport) {
+        match &mut n.src {
+            Some(target) => self.fix_path(target.as_mut()),
+            None => {}
+        };
+    }
+
+    /// export * from './foo';
+    fn visit_mut_export_all(&mut self, n: &mut swc_core::ecma::ast::ExportAll) {
+        self.fix_path(n.src.as_mut());
+    }
+
+    /// import { foo } from './foo';
+    fn visit_mut_import_decl(&mut self, n: &mut swc_core::ecma::ast::ImportDecl) {
+        self.fix_path(n.src.as_mut());
+    }
+
+    /// () => import('./foo'),
+    fn visit_mut_call_expr(&mut self, n: &mut swc_core::ecma::ast::CallExpr) {
+        match n.callee {
+            Callee::Import(callee) => {
+                // ignore non import() function call and empty arguments
+                if callee.phase != ImportPhase::Evaluation || n.args.len() <= 0 {
+                    return;
+                }
+                // extract path literal ('./foo')
+                let import_source = &mut n.args[0];
+                let literal = import_source.expr.as_mut().as_mut_lit();
+                if literal.is_none() {
+                    return;
+                }
+                let target = literal.unwrap().as_mut_str();
+                if target.is_none() {
+                    return;
+                }
+                // do fix path logics
+                self.fix_path(target.unwrap());
+            }
+            _ => {}
         }
     }
 }
@@ -103,9 +124,28 @@ pub fn process_transform(program: Program, metadata: TransformPluginProgramMetad
     )
     .unwrap_or_default();
 
-    program.apply(visit_mut_pass(TransformVisitor {
-        config,
-        filename,
-        cwd,
-    }))
+    REGEX_CELL.get_or_init(|| {
+        let allowed_pathnames = config
+            .allowed_pathnames
+            .as_ref()
+            .map(|pathnames| {
+                pathnames
+                    .into_iter()
+                    .map(|pathname| regex::escape(pathname))
+                    .collect::<Vec<String>>()
+                    .join("|")
+            })
+            .unwrap_or(String::from(""));
+
+        let prefix = regex::escape(
+            config
+                .prefix
+                .as_ref()
+                .map(|prefix| prefix.as_str())
+                .unwrap_or("@"),
+        );
+        Regex::new(&format!(r"{}({})?/", prefix, allowed_pathnames)).unwrap()
+    });
+
+    program.apply(visit_mut_pass(TransformVisitor { filename, cwd }))
 }
