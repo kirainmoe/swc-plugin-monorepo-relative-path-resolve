@@ -2,6 +2,8 @@
 
 A SWC plugin to handle resolving relative import paths like `@/*` and `@common/*` of sub-packages in a monorepo.
 
+> Note: if you are building a new monorepo with path alias requirements, it is recommended to use [Node.js Subpath Imports](https://stackoverflow.com/questions/70462537/what-is-a-subpath-pattern-in-nodejs) instead of this plugin.
+
 ## Why
 
 For monorepo scene, we often have the need to directly import the source code of sub-packages to get a better bundle speed. 

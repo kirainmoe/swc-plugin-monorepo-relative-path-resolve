@@ -9,12 +9,12 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "subpackage": "^1.1.0"
+    "subpackage": "file:../subpackage"
   },
   "devDependencies": {
-    "@ayaseaki/swc-plugin-monorepo-relative-path-resolve": "^0.1.0",
-    "@rspack/cli": "0.7.4",
-    "@rspack/core": "0.7.4",
+    "@ayaseaki/swc-plugin-monorepo-relative-path-resolve": "file:../../../",
+    "@rspack/cli": "^1.2.0",
+    "@rspack/core": "^1.2.0",
     "@rspack/plugin-react-refresh": "0.7.4",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",

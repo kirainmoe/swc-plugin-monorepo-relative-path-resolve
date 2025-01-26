@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
+import { foo, getBar } from "subpackage";
 
 function App() {
 	const [count, setCount] = useState(0);
+
+	const [bar, setBar] = useState(0);
+
+	useEffect(() => {
+		getBar().then(setBar);
+	}, []);
 
 	return (
 		<div className="App">
@@ -20,6 +27,9 @@ function App() {
 				<p>
 					Edit <code>src/App.tsx</code> and save to test HMR
 				</p>
+
+				<p>foo: {foo}</p>
+				<p>bar: {bar}</p>
 			</div>
 			<p className="read-the-docs">
 				Click on the Rspack and React logos to learn more

@@ -67,4 +67,7 @@ module.exports = {
     }),
     isDev ? new refreshPlugin() : null,
   ].filter(Boolean),
+  experiments: {
+    css: true,
+  }
 };
