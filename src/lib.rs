@@ -91,6 +91,7 @@ impl VisitMut for TransformVisitor {
                 if callee.phase != ImportPhase::Evaluation || n.args.len() <= 0 {
                     return;
                 }
+
                 // extract path literal ('./foo')
                 let import_source = &mut n.args[0];
                 let literal = import_source.expr.as_mut().as_mut_lit();

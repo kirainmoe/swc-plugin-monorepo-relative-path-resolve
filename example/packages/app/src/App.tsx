@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
-import { foo, getBar } from "subpackage";
+import { asyncLoader, foo, getBar } from "subpackage";
+
+asyncLoader();
 
 function App() {
 	const [count, setCount] = useState(0);
